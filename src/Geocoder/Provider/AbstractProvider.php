@@ -34,6 +34,16 @@ abstract class AbstractProvider
     protected $maxResults = Geocoder::MAX_RESULTS;
 
     /**
+     * @var bool
+     */
+    protected $quotaExceeded = false;
+
+    /**
+     * @var int|\DateTime
+     */
+    protected $quotaReset = 0;
+
+    /**
      * @param HttpAdapterInterface $adapter An HTTP adapter.
      * @param string               $locale  A locale (optional).
      */
@@ -163,4 +173,42 @@ abstract class AbstractProvider
             return is_string($value) ? utf8_encode($value) : $value;
         }, $results);
     }
+
+    /**
+     * Check if the quota has been exceeded
+     *
+     * @return bool
+     */
+	public function exceededQuota()
+	{
+		return $this->quotaExceeded && $this->quotaReset < time();
+	}
+
+    /**
+	 * Toggle this provider as having exceeded its quota
+	 * 
+     * @param bool $bool
+     *
+     * @return $this
+     */
+	public function setQuotaExceeded($bool)
+	{
+		$this->quotaExceeded = (bool) $bool;
+
+		return $this;
+	}
+
+    /**
+	 * Set when the quota should be reset
+	 * 
+     * @param \DateTime $datetime
+     *
+     * @return $this
+     */
+	public function setQuotaReset(\DateTime $datetime)
+	{
+		$this->quotaReset = $datetime;
+
+		return $this;
+	}
 }

@@ -23,6 +23,11 @@ class ChainProvider implements ProviderInterface
      */
     private $providers = array();
 
+	/**
+     * @var array
+     */
+    private $providersExceedingQuota = array();
+
     /**
      * Constructor
      *
@@ -40,7 +45,23 @@ class ChainProvider implements ProviderInterface
      */
     public function addProvider(ProviderInterface $provider)
     {
-        $this->providers[] = $provider;
+        $this->providers[$provider->getName()] = $provider;
+
+		return $this;
+    }
+
+    /**
+     * Remove a provider
+     *
+     * @param string $provider The name of the provider
+     */
+    public function removeProvider($provider)
+    {
+		if (isset($this->providers[$provider])) {
+			unset($this->providers[$provider]);
+		}
+
+		return $this;
     }
 
     /**
@@ -51,10 +72,18 @@ class ChainProvider implements ProviderInterface
         $exceptions = array();
 
         foreach ($this->providers as $provider) {
+			if ($provider->exceededQuota()) {
+				continue;
+			}
+
             try {
                 return $provider->getGeocodedData($address);
             } catch (InvalidCredentialsException $e) {
                 throw $e;
+            } catch (QuotaExceededException $e) {
+                $this->providersExceedingQuota[] = $provider->getName();
+				$provider->setQuotaExceeded(true);
+                $exceptions[] = $e;
             } catch (\Exception $e) {
                 $exceptions[] = $e;
             }
@@ -71,10 +100,18 @@ class ChainProvider implements ProviderInterface
         $exceptions = array();
 
         foreach ($this->providers as $provider) {
+			if ($provider->exceededQuota()) {
+				continue;
+			}
+
             try {
                 return $provider->getReversedData($coordinates);
             } catch (InvalidCredentialsException $e) {
                 throw $e;
+			} catch (QuotaExceededException $e) {
+                $this->providersExceedingQuota[] = $provider->getName();
+				$provider->setQuotaExceeded(true);
+                $exceptions[] = $e;
             } catch (\Exception $e) {
                 $exceptions[] = $e;
             }
@@ -102,4 +139,12 @@ class ChainProvider implements ProviderInterface
     {
         return 'chain';
     }
+
+    /**
+     * Get the providers which are exceeding their quota
+     */
+	public function getProvidersExceedingQuota()
+	{
+		return $this->providersExceedingQuota;
+	}
 }

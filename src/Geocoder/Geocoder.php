@@ -209,4 +209,18 @@ class Geocoder implements GeocoderInterface
     {
         return $this->resultFactory->createFromArray($data);
     }
+
+    /**
+     * Get the last successful result provider
+     * 
+     * @return string
+     */
+    public function getLastResultProvider()
+    {
+        if (empty($this->provider)) {
+            throw new \RuntimeException('No provider registered.');
+        }
+
+        return $this->provider->getLastResultProvider();
+    }
 }

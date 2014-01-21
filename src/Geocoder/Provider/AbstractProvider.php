@@ -163,14 +163,4 @@ abstract class AbstractProvider
             return is_string($value) ? utf8_encode($value) : $value;
         }, $results);
     }
-
-    /**
-     * Get the last successful result provider
-     * 
-     * @return string
-     */
-    public function getLastResultProvider()
-    {
-        return $this->getName();
-    }
 }
